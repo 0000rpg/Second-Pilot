@@ -17,5 +17,26 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
+          path: frontend
           target: /app
+
+  backend-prod:
+    container_name: "SecondPilot_Backend"
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    ports:
+      - "80:8080"
+
+  backend-dev:
+    container_name: "SecondPilot_Backend_DEV"
+    build:
+      context: backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "80:8080"
+    develop:
+      watch:
+        - action: sync+restart
+          path: backend
+          target: /usr/src/app
