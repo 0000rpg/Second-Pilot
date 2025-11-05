@@ -1,38 +1,36 @@
-# Second-Pilot
+# Фронтенд Second-Pilot
 
-This template should help get you started developing with Vue 3 in Vite.
+## Рекомендуемое IDE
 
-## Recommended IDE Setup
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (и выклчить Vetur).
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
+## Рекомендуемые настройки браузера
 
 - Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
+  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
   - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
 - Firefox:
   - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
   - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
 
-## Customize configuration
+## Запуск контейнера
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### _Для разработки_
 
-## Project Setup
+Для разработки фронтэнда использовать команду (в корне проекта):
 
-```sh
-npm install
+```Dockerfile
+docker compose watch frontend-dev
 ```
 
-### Compile and Hot-Reload for Development
+Эта команда создаст **Docker-контейнер**, файлы которого синхронизируются с файлами в проекте. Сайт будет находится в <http://localhost:5173/>.
 
-```sh
-npm run dev
+### _Для релиза_
+
+Для запуска контейнера релизной версии фронтенда использовать:
+
+```Dockerfile
+docker compose up frontend-prod
 ```
 
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
+Доступ к сайту будет по <http://localhost/> (порт 80)

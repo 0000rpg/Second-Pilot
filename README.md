@@ -21,3 +21,5 @@ docker compose up frontend-prod
 ```
 
 Доступ к сайту будет по <http://localhost/> (порт 80)
+
+Больше информации по [**фронтенду**](https://github.com/0000rpg/Second-Pilot/blob/main/frontend/README.md).
