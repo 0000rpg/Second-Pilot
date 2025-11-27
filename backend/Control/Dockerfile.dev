@@ -8,4 +8,6 @@ RUN go mod download
 
 COPY . .
 
+EXPOSE 80
+
 CMD ["go", "run", "./..."]

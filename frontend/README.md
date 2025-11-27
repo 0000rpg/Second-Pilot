@@ -1,9 +1,24 @@
-# Фронтенд Second-Pilot
+# Frontend Second-Pilot
+
+## Описание
+
+Frontend использует фреймворк Vue.js. В качестве формата
+[SFC](https://ru.vuejs.org/guide/scaling-up/sfc.html) (однофайловых компонентов - `.vue` файлов)
+используется - [Composition API](https://ru.vuejs.org/guide/introduction.html#api-styles).
 
 ## Рекомендуемое IDE
 
 [VS Code](https://code.visualstudio.com/) +
-[Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (и выклчить Vetur).
+[Плагин Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+
+## Cтилизатора кода
+
+Для использования стилизатора кода скачиваем расширение для VSCode - prettier. И в папке frontend
+выполняем команду:
+
+```bash
+npm install
+```
 
 ## Рекомендуемые настройки браузера
 
@@ -13,33 +28,3 @@
 - Firefox:
     - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
     - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Запуск контейнера
-
-### _Для разработки_
-
-Для разработки фронтэнда использовать команду (в корне проекта):
-
-```Dockerfile
-docker compose watch frontend-dev
-```
-
-Эта команда создаст **Docker-контейнер**, файлы которого синхронизируются с файлами в проекте. Сайт
-будет находится в <http://localhost:5173/>.
-
-Для использования стилизатора кода скачиваем расширение для VSCode - prettier. И в папке frontend
-выполняем команду:
-
-```bash
-npm install
-```
-
-### _Для релиза_
-
-Для запуска контейнера релизной версии фронтенда использовать:
-
-```Dockerfile
-docker compose up frontend-prod
-```
-
-Доступ к сайту будет по <http://localhost/> (порт 80)
