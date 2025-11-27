@@ -5,17 +5,19 @@ services:
         restart: always
         shm_size: 128mb
         environment:
-            POSTGRES_PASSWORD: example
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
 
     frontend-prod:
         container_name: "Frontend"
         build:
             context: frontend
             dockerfile: Dockerfile
-        depends_on:
-            - backend-control-prod
         ports:
             - "80:8080"
+        depends_on:
+            - backend-control-prod
 
     frontend-dev:
         container_name: "Frontend_DEV"
@@ -40,6 +42,10 @@ services:
         depends_on:
             - database
             - backend-llm
+        environment:
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+            DB_NAME: ${DB_NAME}
 
     backend-control-dev:
         container_name: "Control_service_DEV"
@@ -51,6 +57,10 @@ services:
         depends_on:
             - database
             - backend-llm
+        environment:
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+            DB_NAME: ${DB_NAME}
         develop:
             watch:
                 - action: sync+restart
@@ -62,6 +72,10 @@ services:
         build: backend/LLM
         ports:
             - "8081:80"
+        environment:
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+            DB_NAME: ${DB_NAME}
         develop:
             watch:
                 - action: sync+restart
