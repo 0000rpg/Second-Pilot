@@ -1,42 +1,69 @@
 services:
-  frontend-prod:
-    container_name: "SecondPilot_Frontend"
-    build:
-      context: frontend
-      dockerfile: Dockerfile
-    ports:
-      - "80:8080"
+    database:
+        container_name: "PostgreSQL_database"
+        image: postgres
+        restart: always
+        shm_size: 128mb
+        environment:
+            POSTGRES_PASSWORD: example
 
-  frontend-dev:
-    container_name: "SecondPilot_Frontend_DEV"
-    build:
-      context: frontend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "5173:5173"
-    develop:
-      watch:
-        - action: sync
-          path: frontend
-          target: /app
+    frontend-prod:
+        container_name: "Frontend"
+        build:
+            context: frontend
+            dockerfile: Dockerfile
+        depends_on:
+            - backend-control-prod
+        ports:
+            - "80:8080"
 
-  backend-prod:
-    container_name: "SecondPilot_Backend"
-    build:
-      context: backend
-      dockerfile: Dockerfile
-    ports:
-      - "80:8080"
+    frontend-dev:
+        container_name: "Frontend_DEV"
+        build:
+            context: frontend
+            dockerfile: Dockerfile.dev
+        ports:
+            - "5173:5173"
+        depends_on:
+            - backend-control-dev
+        develop:
+            watch:
+                - action: sync
+                  path: frontend
+                  target: /app
 
-  backend-dev:
-    container_name: "SecondPilot_Backend_DEV"
-    build:
-      context: backend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "80:8080"
-    develop:
-      watch:
-        - action: sync+restart
-          path: backend
-          target: /usr/src/app
+    backend-control-prod:
+        container_name: "Control_service"
+        build:
+            context: backend/Control
+            dockerfile: Dockerfile
+        ports:
+            - "80:8080"
+        depends_on:
+            - database
+            - backend-llm
+
+    backend-control-dev:
+        container_name: "Control_service_DEV"
+        build:
+            context: backend/Control
+            dockerfile: Dockerfile.dev
+        ports:
+            - "80:8080"
+        depends_on:
+            - database
+            - backend-llm
+        develop:
+            watch:
+                - action: sync+restart
+                  path: backend/Control
+                  target: /usr/src/app
+
+    backend-llm:
+        container_name: "LLM_service"
+        build: backend/LLM
+        develop:
+            watch:
+                - action: sync+restart
+                  path: backend/LLM
+                  target: /usr/src/app
