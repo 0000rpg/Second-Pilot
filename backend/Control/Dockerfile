@@ -1,4 +1,4 @@
-FROM golang:1.25
+FROM golang:1.25 AS builder
 
 WORKDIR /usr/src/app
 
@@ -7,8 +7,12 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -v -o /usr/local/bin/app ./...
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o /app/ ./cmd
+
+FROM scratch AS runner
+
+COPY --from=builder /app/cmd /server
 
 EXPOSE 80
 
-CMD ["app"]
+CMD ["/server"]
