@@ -37,8 +37,6 @@ services:
         build:
             context: backend/Control
             dockerfile: Dockerfile
-        ports:
-            - "80:8080"
         depends_on:
             - database
             - backend-llm
@@ -49,7 +47,7 @@ services:
             context: backend/Control
             dockerfile: Dockerfile.dev
         ports:
-            - "80:8080"
+            - "8080:80"
         depends_on:
             - database
             - backend-llm
@@ -62,6 +60,8 @@ services:
     backend-llm:
         container_name: "LLM_service"
         build: backend/LLM
+        ports:
+            - "8081:80"
         develop:
             watch:
                 - action: sync+restart

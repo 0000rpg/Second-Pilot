@@ -20,7 +20,7 @@ docker compose watch frontend-dev
 docker compose up frontend-prod
 ```
 
-Доступ к сайту будет по <http://localhost/> (порт 80)
+Доступ к сайту будет по <http://localhost/> (порт 80).
 
 ## _Дополнительная информация_
 
