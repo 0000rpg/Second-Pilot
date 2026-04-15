@@ -1,9 +1,13 @@
-<script setup>
-import { RouterView } from 'vue-router';
-</script>
-
 <template>
-	<RouterView />
+  <Header v-show="showShell" />
+  <router-view class="mt-20" />
 </template>
 
-<style scoped></style>
+<script setup>
+import Header from '@/shared/ui/Header.vue';
+import { useAuthStore } from '@/features/auth/stores/auth';
+import { computed } from 'vue';
+
+const authStore = useAuthStore();
+const showShell = computed(() => authStore.isAuthenticated);
+</script>

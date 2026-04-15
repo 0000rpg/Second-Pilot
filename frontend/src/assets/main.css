@@ -1,0 +1,153 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-theme: rgba(237, 108, 33, 1);
+  --color-theme-a: rgba(255, 145, 35, 1);
+  --color-main: rgba(24, 25, 26, 1);
+  --color-main-a: rgba(47, 48, 48, 1);
+  --color-border: rgba(92, 92, 92, 1);
+  --color-border-a: rgba(117, 117, 117, 1);
+  --color-text: rgba(255, 255, 255, 1);
+  --color-text-a: rgba(240, 240, 240, 1);
+  --color-main-td: rgba(24, 25, 26, 0.8);
+  --color-main-td-a: rgba(24, 25, 26, 0.6);
+  --color-main-tb: rgba(117, 117, 117, 0.8);
+  --color-main-tb-a: rgba(117, 117, 117, 0.6);
+  --color-background: rgba(21, 16, 16, 1);
+  --color-glass: rgba(117, 117, 117, 0.4);
+  --color-correct: rgba(67, 195, 17, 1);
+  --color-correct-a: rgba(67, 235, 17, 1);
+  --color-error: rgba(193, 0, 7, 1);
+  --color-error-a: rgba(153, 0, 7, 1);
+
+  --color-correct-tb: rgba(67, 195, 17, 0.4);
+  --color-error-tb: rgba(193, 0, 7, 0.6);
+
+  --color-chat-user: rgba(237, 108, 33, 0.4);
+}
+
+@utility bg-stripes-diagonal-transparent {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0px,
+    transparent 8px,
+    var(--color-glass) 8px,
+    var(--color-glass) 10px
+  );
+}
+
+@utility bg-stripes-error {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0px,
+    transparent 8px,
+    var(--color-error-tb) 8px,
+    var(--color-error-tb) 10px
+  );
+}
+
+@utility bg-stripes-correct {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0px,
+    transparent 8px,
+    var(--color-correct-tb) 8px,
+    var(--color-correct-tb) 10px
+  );
+}
+
+/* ==================== Buttons ==================== */
+@layer components {
+  /* Базовые стили */
+  .btn {
+    @apply border-border text-text hover:border-border-a h-full w-full rounded-2xl border-2 p-2 text-center text-lg font-bold transition-all duration-300 ease-in-out;
+  }
+
+  /* Варианты кнопок */
+  .btn-default {
+    @apply bg-theme hover:bg-theme-a border-border text-text hover:border-border-a h-full w-full rounded-2xl border-2 p-2 text-center text-lg font-bold transition-all duration-300 ease-in-out;
+  }
+
+  .btn-block {
+    @apply bg-main-tb hover:bg-main-tb-a border-border text-text hover:border-border-a h-full w-full rounded-2xl border-2 p-2 text-center text-lg font-bold transition-all duration-300 ease-in-out;
+  }
+
+  .btn-correct {
+    @apply bg-correct hover:bg-correct-a border-border text-text hover:border-border-a h-full w-full rounded-2xl border-2 p-2 text-center text-lg font-bold transition-all duration-300 ease-in-out;
+  }
+
+  .btn-error {
+    @apply bg-error hover:bg-error-a border-border text-text hover:border-border-a h-full w-full rounded-2xl border-2 p-2 text-center text-lg font-bold transition-all duration-300 ease-in-out;
+  }
+}
+/* ==================== Buttons ==================== */
+
+@layer base {
+  h1 {
+    @apply text-text border-border m-5 w-full border-b-2 pb-5 text-center text-5xl font-bold;
+  }
+  h2 {
+    @apply text-text border-border m-5 w-full border-b-2 pb-5 text-center text-4xl font-bold;
+  }
+  h3 {
+    @apply text-text border-border m-3 w-full border-b-2 pb-3 text-left text-2xl font-bold;
+  }
+  label {
+    @apply text-text block font-medium;
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply bg-main border-border m-5 flex h-full w-full max-w-lg flex-col items-center rounded-2xl border-5 transition-all duration-300 ease-in-out;
+  }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-main-tb-a) inset !important;
+  box-shadow: 0 0 0 1000px var(--color-main-tb-a) inset !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+  transition: background-color 5000s ease-in-out 0s; /* для Firefox */
+}
+
+/* ==================== Modal page ==================== */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+/* ==================== Modal page ==================== */
+
+@layer utilities {
+  /* Для Webkit браузеров (Chrome, Safari, Edge) */
+  .custom-scrollbar {
+    scrollbar-width: thin; /* Для Firefox - узкий */
+    scrollbar-color: var(--color-theme) transparent; /* Для Firefox */
+  }
+
+  /* Для Webkit */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(237, 108, 33, 1);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(237, 108, 33, 0.8);
+  }
+}
