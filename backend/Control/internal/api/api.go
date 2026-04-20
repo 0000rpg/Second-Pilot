@@ -15,6 +15,10 @@ func Init(r chi.Router) {
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 	}))
 
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		writeJson(w, map[string]any{"ok": true}, http.StatusOK)
+	})
+
 	r.Post("/auth/register", HandlerRegister)
 	r.Post("/auth/login", HandlerLogin)
 	r.Get("/auth/verify", HandlerVerify)
