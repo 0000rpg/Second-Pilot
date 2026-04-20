@@ -103,6 +103,7 @@ export const useMessagesStore = defineStore('messages', {
         }
       } finally {
         this.streaming = false;
+        await chatsStore.saveChat(chatsStore.currentChatId);
       }
     },
 

@@ -1,91 +1,138 @@
 import { defineStore } from 'pinia';
-// ИМПОРТ ИЗ ЦЕНТРАЛЬНОГО ФАЙЛА СЕРВИСОВ (index.js)
-import { storageRepository } from '@/shared/services';
-import { ChatManager } from '../managers/ChatManager';
+import { controlApi } from '@/features/auth/services/controlApi';
+import { useAuthStore } from '@/features/auth/stores/auth';
 
-/**
- * @fileoverview Менеджер бизнес-логики для управления состоянием чатов.
- *
- * Назначение: Инкапсулирует всю логику работы с массивом чатов, соблюдая SRP.
- * Этот класс не является Pinia Store, а чистой утилитой, которую использует Store как Фасад.
- */
 export const useChatsStore = defineStore('chats', {
   state: () => ({
-    // Инициализируем chatManager с пустым массивом, чтобы избежать проблем при первом рендере
-    chatManager: new ChatManager([]),
-    currentChatId: null, // Явно управляемое состояние для Pinia Store
+    chats: [],         // [{ id, name, messages, createdAt, updatedAt }]
+    currentChatId: null,
   }),
   getters: {
-    // currentChat использует state.currentChatId для поиска в chatManager.chats
-    currentChat: (state) =>
-      state.chatManager.chats.find((c) => c.id === state.currentChatId) || null,
-    allChats: (state) => {
-      return [...state.chatManager.chats];
-    },
+    currentChat: (state) => state.chats.find((c) => c.id === state.currentChatId) || null,
+    allChats: (state) => [...state.chats],
   },
   actions: {
+    _token() {
+      return useAuthStore().token;
+    },
+
     async init() {
-      // 1. Попытка загрузить данные из хранилища с обработкой ошибок
-      let savedChats = null;
+      const token = this._token();
+      if (!token) return;
+
       try {
-        savedChats = await storageRepository.getItem('chat_history');
+        const data = await controlApi.chats.getAll(token);
+        const serverChats = (data.chats || []).map(this._mapChat);
+        this.chats = serverChats;
+        this.currentChatId = serverChats.length > 0 ? serverChats[0].id : null;
       } catch (e) {
-        console.error('Ошибка при чтении истории чатов:', e);
+        console.error('Ошибка загрузки чатов:', e);
       }
-      if (Array.isArray(savedChats) && savedChats.length > 0) {
-        this.chatManager.chats = savedChats; // Загружаем чаты в менеджер
-        // Устанавливаем текущий ID на основе сохраненных данных
-        this.currentChatId = savedChats[0].id || null;
-      } else {
-        // Если ничего не сохранено, инициализируем с нуля
-        const initialData = this.chatManager.init();
-        this.chatManager.chats = initialData.initialChats; // Обновляем внутренний массив
-        this.currentChatId = initialData.initialChatId; // Устанавливаем ID в Pinia state
+
+      if (this.chats.length === 0) {
+        await this.createChat('Новый чат');
       }
     },
+
     async createChat(name = null) {
-      // 1. Создаем чат через менеджер, который добавляет его в internal array
-      const newId = this.chatManager.createChat(name);
-      // 2. Обновляем state.currentChatId и сохраняем список чатов в хранилище
-      this.currentChatId = newId;
-      await this.saveChats();
-      return newId;
+      const token = this._token();
+      const chatName = name || `Чат ${this.chats.length + 1}`;
+
+      try {
+        const data = await controlApi.chats.create(token, chatName);
+        const newChat = this._mapChat(data.chat);
+        this.chats.unshift(newChat);
+        this.currentChatId = newChat.id;
+        return newChat.id;
+      } catch (e) {
+        console.error('Ошибка создания чата:', e);
+      }
     },
+
     async deleteChat(id) {
-      // 1. Вызываем менеджер для получения нового состояния (массив без удаленного элемента и новый active ID)
-      const result = this.chatManager.deleteChat(id);
-      // 2. Применяем изменения к состоянию Store и сохраняем
-      if (result) {
-        this.chatManager.chats = result.updatedChats;
-        this.currentChatId = result.newActiveId;
-        await this.saveChats();
+      const token = this._token();
+
+      try {
+        await controlApi.chats.remove(token, id);
+      } catch (e) {
+        console.error('Ошибка удаления чата:', e);
       }
-      return result?.newActiveId;
+
+      const index = this.chats.findIndex((c) => c.id === id);
+      if (index !== -1) this.chats.splice(index, 1);
+
+      if (this.currentChatId === id) {
+        this.currentChatId = this.chats.length > 0 ? this.chats[0].id : null;
+      }
+
+      if (this.chats.length === 0) {
+        await this.createChat('Новый чат');
+      }
+
+      return this.currentChatId;
     },
+
     async renameChat(id, newName) {
-      this.chatManager.renameChat(id, newName);
-      await this.saveChats();
-    },
-    setCurrentChat(id) {
-      // Проверяем валидность ID и обновляем state.currentChatId только если чат существует в менеджере
-      if (this.chatManager.chats.find((c) => c.id === id)) {
-        this.currentChatId = id;
-        // При смене чата, мы просто обновляем ID и сохраняем список, чтобы обеспечить консистентность
-        this.saveChats();
+      const token = this._token();
+      const chat = this.chats.find((c) => c.id === id);
+      if (!chat) return;
+
+      const name = (newName || '').trim() || 'Без названия';
+      chat.name = name;
+
+      try {
+        await controlApi.chats.update(token, id, name, chat.messages || []);
+      } catch (e) {
+        console.error('Ошибка переименования чата:', e);
       }
     },
-    async clearAllChats() {
-      // 1. Вызываем менеджер для получения нового состояния (массив с одним новым элементом)
-      const result = this.chatManager.clearAllChats();
-      // 2. Применяем изменения к состоянию Store и сохраняем
-      this.chatManager.chats = result.updatedChats;
-      this.currentChatId = result.newActiveId;
-      await this.saveChats();
+
+    setCurrentChat(id) {
+      if (this.chats.find((c) => c.id === id)) {
+        this.currentChatId = id;
+      }
     },
-    // --- Методы сохранения состояния (Persistence) ---
-    async saveChats() {
-      const chatsToSave = this.chatManager.chats.map((c) => ({ ...c })); // Глубокая копия для сохранения
-      await storageRepository.setItem('chat_history', chatsToSave);
+
+    async saveChat(id) {
+      const token = this._token();
+      const chat = this.chats.find((c) => c.id === id);
+      if (!chat || !token) return;
+
+      try {
+        await controlApi.chats.update(token, id, chat.name, chat.messages || []);
+        chat.updatedAt = new Date().toISOString();
+        // Переставляем чат в начало списка после обновления
+        const index = this.chats.findIndex((c) => c.id === id);
+        if (index > 0) {
+          const [moved] = this.chats.splice(index, 1);
+          this.chats.unshift(moved);
+        }
+      } catch (e) {
+        console.error('Ошибка сохранения чата:', e);
+      }
+    },
+
+    async clearAllChats() {
+      const token = this._token();
+
+      const ids = this.chats.map((c) => c.id);
+      await Promise.allSettled(ids.map((id) => controlApi.chats.remove(token, id)));
+
+      this.chats = [];
+      this.currentChatId = null;
+
+      await this.createChat('Новый чат');
+    },
+
+    _mapChat(serverChat) {
+      return {
+        id: serverChat.id,
+        name: serverChat.name,
+        messages: Array.isArray(serverChat.messages) ? serverChat.messages : [],
+        lastMessageContent: '',
+        createdAt: serverChat.created_at,
+        updatedAt: serverChat.updated_at,
+      };
     },
   },
 });

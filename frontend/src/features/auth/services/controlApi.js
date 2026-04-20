@@ -64,4 +64,12 @@ export const controlApi = {
       authRequest('PUT', `/admin/users/${id}`, token, { login }),
     deleteUser: (token, id) => authRequest('DELETE', `/admin/users/${id}`, token),
   },
+
+  chats: {
+    getAll: (token) => authRequest('GET', '/chats', token),
+    create: (token, name) => authRequest('POST', '/chats', token, { name }),
+    update: (token, id, name, messages) =>
+      authRequest('PUT', `/chats/${id}`, token, { name, messages }),
+    remove: (token, id) => authRequest('DELETE', `/chats/${id}`, token),
+  },
 };

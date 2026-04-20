@@ -25,6 +25,12 @@ func Init(r chi.Router) {
 		r.Post("/admin/users", HandlerCreateUser)
 		r.Put("/admin/users/{id}", HandlerRenameUser)
 		r.Delete("/admin/users/{id}", HandlerDeleteUser)
+
+		r.Get("/chats", HandlerGetChats)
+		r.Post("/chats", HandlerCreateChat)
+		r.Get("/chats/{id}", HandlerGetChat)
+		r.Put("/chats/{id}", HandlerUpdateChat)
+		r.Delete("/chats/{id}", HandlerDeleteChat)
 	})
 }
 
