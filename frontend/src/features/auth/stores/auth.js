@@ -1,45 +1,41 @@
 import { defineStore } from 'pinia';
-import { authService } from '../services/authService';
-import { useAccountsStore } from '@/features/auth/stores/accounts';
+import { controlApi } from '../services/controlApi';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
+    token: null,
     isAuthenticated: false,
   }),
-  persist: true,
   actions: {
-    /**
-     * Логинит пользователя.
-     * @param {string} username - Имя пользователя.
-     * @param {string} password - Пароль пользователя.
-     */
-    login(username, password) {
-      // 1. Получаем полный список аккаунтов из хранилища (контекст для сервиса)
-      const accountsList = useAccountsStore().accounts;
-
-      if (!accountsList || accountsList.length === 0) {
-        console.error('Невозможно войти: Список учетных записей пуст.');
-        return false; // Возвращаем явный флаг ошибки
-      }
-
-      // 2. Вызываем сервис, передавая ему контекст (список аккаунтов), логин и пароль.
-      const result = authService.login(username, password, accountsList);
-
-      if (result && result.success && result.user) {
-        this.user = result.user.username;
-        this.isAuthenticated = true;
-        return true;
-      } else {
-        // Логируем ошибку, чтобы пользователь увидел ее в UI
-        console.error('Login failed:', result?.message || 'Не удалось войти.');
-        return false;
-      }
+    async login(username, password) {
+      const data = await controlApi.login(username, password);
+      this.user = data.username;
+      this.token = data.token;
+      this.isAuthenticated = true;
+    },
+    async register(username, password) {
+      const data = await controlApi.register(username, password);
+      this.user = data.username;
+      this.token = data.token;
+      this.isAuthenticated = true;
     },
     logout() {
-      authService.logout(); // Вызываем сервис для выполнения логики выхода
       this.user = null;
+      this.token = null;
       this.isAuthenticated = false;
     },
+    // Вызывается при старте приложения: проверяет сохранённый токен через сервер.
+    async initAuth() {
+      if (!this.token) return;
+      try {
+        const data = await controlApi.verify(this.token);
+        this.user = data.username;
+        this.isAuthenticated = true;
+      } catch {
+        this.logout();
+      }
+    },
   },
+  persist: true,
 });

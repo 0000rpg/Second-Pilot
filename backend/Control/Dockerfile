@@ -12,6 +12,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o /app/ ./cmd
 FROM scratch AS runner
 
 COPY --from=builder /app/cmd /server
+COPY --from=builder /usr/src/app/migrations /migrations
 
 EXPOSE 80
 

@@ -12,7 +12,7 @@
         </div>
 
         <AccountTable
-          :accounts="accountsStore.accounts"
+          :accounts="users"
           @edit="openEditModal"
           @delete="deleteAccount"
         />
@@ -28,14 +28,14 @@
           class="bg-main border-border max-h-md m-5 flex h-fit w-full max-w-md flex-col items-center rounded-2xl border-5 transition-all duration-300 ease-in-out"
         >
           <h2>
-            {{ modalMode === 'add' ? 'Добавить аккаунт' : 'Редактировать аккаунт' }}
+            {{ modalMode === 'add' ? 'Добавить аккаунт' : 'Переименовать аккаунт' }}
           </h2>
           <form @submit.prevent="saveAccount" class="w-full space-y-5">
             <div class="p-5">
               <label for="modal-username">Имя пользователя</label>
               <Input id="modal-username" v-model="editForm.username" type="text" required />
             </div>
-            <div class="p-5">
+            <div v-if="modalMode === 'add'" class="p-5">
               <label for="modal-password">Пароль</label>
               <Input id="modal-password" v-model="editForm.password" type="password" required />
             </div>
@@ -60,6 +60,7 @@ import Button from '@/shared/ui/SmartButton.vue';
 import Input from '@/shared/ui/SmartInput.vue';
 
 const {
+  users,
   showModal,
   modalMode,
   editForm,
@@ -70,7 +71,6 @@ const {
   saveAccount,
   deleteAccount,
   logout,
-  accountsStore,
   authStore,
 } = useAdminPanel();
 </script>

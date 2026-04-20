@@ -1,83 +1,90 @@
 services:
-    database:
-        container_name: "PostgreSQL_database"
-        image: postgres:alpine
-        restart: always
-        shm_size: 128mb
-        environment:
-            POSTGRES_USER: ${DB_USER}
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
-            POSTGRES_DB: ${DB_NAME}
+  database:
+    container_name: "PostgreSQL_database"
+    image: postgres:alpine
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
 
-    frontend-prod:
-        container_name: "Frontend"
-        build:
-            context: frontend
-            dockerfile: Dockerfile
-        ports:
-            - "80:8080"
-        depends_on:
-            - backend-control-prod
+  frontend-prod:
+    container_name: "Frontend"
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:8080"
+    depends_on:
+      - backend-control-prod
 
-    frontend-dev:
-        container_name: "Frontend_DEV"
-        build:
-            context: frontend
-            dockerfile: Dockerfile.dev
-        ports:
-            - "80:5173"
-        depends_on:
-            - backend-control-dev
-        develop:
-            watch:
-                - action: sync
-                  path: frontend
-                  target: /app
+  frontend-dev:
+    container_name: "Frontend_DEV"
+    build:
+      context: frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "80:5173"
+    depends_on:
+      - backend-control-dev
+    environment:
+      API_TARGET: http://backend-control-dev:80
+    develop:
+      watch:
+        - action: sync
+          path: frontend
+          target: /app
 
-    backend-control-prod:
-        container_name: "Control_service"
-        build:
-            context: backend/Control
-            dockerfile: Dockerfile
-        depends_on:
-            - database
-            - backend-llm
-        environment:
-            DB_USER: ${DB_USER}
-            DB_PASSWORD: ${DB_PASSWORD}
-            DB_NAME: ${DB_NAME}
+  backend-control-prod:
+    container_name: "Control_service"
+    build:
+      context: backend/Control
+      dockerfile: Dockerfile
+    depends_on:
+      - database
+      - backend-llm
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      MIGRATIONS_PATH: /migrations
 
-    backend-control-dev:
-        container_name: "Control_service_DEV"
-        build:
-            context: backend/Control
-            dockerfile: Dockerfile.dev
-        ports:
-            - "8080:80"
-        depends_on:
-            - database
-            - backend-llm
-        environment:
-            DB_USER: ${DB_USER}
-            DB_PASSWORD: ${DB_PASSWORD}
-            DB_NAME: ${DB_NAME}
-        develop:
-            watch:
-                - action: sync+restart
-                  path: backend/Control
-                  target: /usr/src/app
+  backend-control-dev:
+    container_name: "Control_service_DEV"
+    build:
+      context: backend/Control
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:80"
+    depends_on:
+      - database
+      - backend-llm
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+    develop:
+      watch:
+        - action: sync+restart
+          path: backend/Control
+          target: /usr/src/app
 
-    backend-llm:
-        container_name: "LLM_service"
-        build: backend/LLM
-        ports:
-            - "8081:80"
-        environment:
-            DB_USER: ${DB_USER}
-            DB_PASSWORD: ${DB_PASSWORD}
-            DB_NAME: ${DB_NAME}
-        develop:
-            watch:
-                - action: sync+restart
-                  path: backend/LLM
-                  target: /usr/src/app
+  backend-llm:
+    container_name: "LLM_service"
+    build: backend/LLM
+    ports:
+      - "8081:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    develop:
+      watch:
+        - action: sync+restart
+          path: backend/LLM
+          target: /usr/src/app

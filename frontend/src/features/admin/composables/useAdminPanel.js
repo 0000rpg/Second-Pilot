@@ -1,24 +1,29 @@
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAccountsStore } from '@/features/auth/stores/accounts';
 import { useAuthStore } from '@/features/auth/stores/auth';
+import { controlApi } from '@/features/auth/services/controlApi';
 
 export function useAdminPanel() {
   const router = useRouter();
-  const accountsStore = useAccountsStore();
   const authStore = useAuthStore();
 
-  // Состояние модального окна
+  const users = ref([]);
   const showModal = ref(false);
-  const modalMode = ref('add'); // 'add' или 'edit'
-  const editForm = reactive({
-    id: null,
-    username: '',
-    password: '',
-  });
+  const modalMode = ref('add');
+  const editForm = reactive({ id: null, username: '', password: '' });
   const modalError = ref('');
 
-  // Открыть модалку добавления
+  const loadUsers = async () => {
+    try {
+      const data = await controlApi.admin.getUsers(authStore.token);
+      users.value = data.users;
+    } catch (e) {
+      console.error('Ошибка загрузки пользователей:', e.message);
+    }
+  };
+
+  onMounted(loadUsers);
+
   const openAddModal = () => {
     modalMode.value = 'add';
     editForm.id = null;
@@ -28,84 +33,70 @@ export function useAdminPanel() {
     showModal.value = true;
   };
 
-  // Открыть модалку редактирования
-  const openEditModal = (account) => {
+  const openEditModal = (user) => {
     modalMode.value = 'edit';
-    editForm.id = account.id;
-    editForm.username = account.username;
-    editForm.password = account.password;
+    editForm.id = user.id;
+    editForm.username = user.username;
+    editForm.password = '';
     modalError.value = '';
     showModal.value = true;
   };
 
-  // Закрыть модалку
   const closeModal = () => {
     showModal.value = false;
   };
 
-  // Сохранить аккаунт (добавить или обновить)
-  const saveAccount = () => {
+  const saveAccount = async () => {
     modalError.value = '';
-
-    const existing = accountsStore.accounts.find((acc) => acc.username === editForm.username);
-
-    if (existing && (modalMode.value === 'add' || existing.id !== editForm.id)) {
-      modalError.value = 'Пользователь с таким именем уже существует';
-      return;
-    }
-
-    if (modalMode.value === 'add') {
-      accountsStore.addAccount({
-        username: editForm.username,
-        password: editForm.password,
-      });
-    } else {
-      accountsStore.updateAccount(editForm.id, {
-        username: editForm.username,
-        password: editForm.password,
-      });
-
-      const updatedAccount = accountsStore.accounts.find((a) => a.id === editForm.id);
-      if (authStore.user === updatedAccount?.username) {
-        authStore.user = editForm.username;
+    try {
+      if (modalMode.value === 'add') {
+        await controlApi.admin.createUser(authStore.token, editForm.username, editForm.password);
+      } else {
+        await controlApi.admin.renameUser(authStore.token, editForm.id, editForm.username);
+        // Если переименовали себя — обновить имя в сторе
+        if (authStore.user === users.value.find((u) => u.id === editForm.id)?.username) {
+          authStore.user = editForm.username;
+        }
       }
+      await loadUsers();
+      closeModal();
+    } catch (e) {
+      modalError.value = e.message;
     }
-    closeModal();
   };
 
-  // Удалить аккаунт
-  const deleteAccount = (id, username) => {
-    if (confirm(`Вы уверены, что хотите удалить аккаунт ${username}?`)) {
-      accountsStore.deleteAccount(id);
+  const deleteAccount = async (id, username) => {
+    if (!confirm(`Вы уверены, что хотите удалить аккаунт ${username}?`)) return;
+    try {
+      await controlApi.admin.deleteUser(authStore.token, id);
       if (authStore.user === username) {
         authStore.logout();
         router.push('/');
+        return;
       }
+      await loadUsers();
+    } catch (e) {
+      console.error('Ошибка удаления пользователя:', e.message);
     }
   };
 
-  // Выйти из системы
   const logout = () => {
     authStore.logout();
     router.push('/');
   };
 
   return {
-    // Состояние
+    users,
     showModal,
     modalMode,
     editForm,
     modalError,
-    // Методы UI
     openAddModal,
     openEditModal,
     closeModal,
-    // Бизнес-методы
     saveAccount,
     deleteAccount,
     logout,
-    // Доступ к хранилищам (если нужно в шаблоне)
-    accountsStore,
     authStore,
   };
 }

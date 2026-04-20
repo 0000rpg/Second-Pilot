@@ -1,4 +1,4 @@
-FROM python:3-alpine
+FROM python:3.12-alpine
 
 WORKDIR /usr/src/app
 
@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 80
 
-CMD [ "python", "./main.py" ]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "80"]

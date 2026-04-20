@@ -12,17 +12,25 @@ import (
 
 func main() {
 	dbdata := db.ConnData{
-		Host: "database",
-		Port: 5432,
-		User: os.Getenv("DB_USER"),
+		Host:     "database",
+		Port:     5432,
+		User:     os.Getenv("DB_USER"),
 		Password: os.Getenv("DB_PASSWORD"),
-		DBname: os.Getenv("DB_NAME"),
+		DBname:   os.Getenv("DB_NAME"),
 	}
 
 	err := db.Init(dbdata)
-
 	if err != nil {
 		fmt.Printf("Connect database error: %s\n", err.Error())
+		return
+	}
+
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		migrationsPath = "migrations"
+	}
+	if err := db.RunMigrations(migrationsPath); err != nil {
+		fmt.Printf("Run migrations error: %s\n", err.Error())
 		return
 	}
 
@@ -33,8 +41,7 @@ func main() {
 	fmt.Println("Server start")
 
 	err = http.ListenAndServe(":80", r)
-	
-	if (err != nil) {
+	if err != nil {
 		fmt.Printf("Listen and serve server error: %s\n", err.Error())
 		return
 	}
