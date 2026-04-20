@@ -1,4 +1,5 @@
 import os
+import requests
 from typing import Dict, Any
 from .base_llm_service import LLMService
 
@@ -8,22 +9,17 @@ class LMStudioLLMService(LLMService):
     Assumes the service is running locally on http://localhost:1234/v1/chat/completions
     """
     def __init__(self, api_key: str = "local", model_name: str = "auto"):
-        # For local services, API key might be ignored or set to a placeholder.
         super().__init__(api_key, model_name)
         self.base_url = "http://localhost:1234/v1/chat/completions"
 
     def _call_llm(self, messages: list, temperature: float = 0.7) -> Dict[str, Any]:
-        """Helper function to handle the actual API call to LM Studio."""
-        headers = {
-            "Content-Type": "application/json"
-        }
+        headers = {"Content-Type": "application/json"}
         payload = {
             "model": self.model_name,
             "messages": messages,
             "temperature": temperature
         }
         try:
-            # Note: Using a different base URL and potentially simpler auth for local setup
             response = requests.post(self.base_url, headers=headers, json=payload)
             response.raise_for_status()
             return response.json()

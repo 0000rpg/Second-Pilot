@@ -1,82 +1,75 @@
 import json
 from typing import List, Dict, Any
 from llm_service.base_llm_service import LLMService
-# Assuming we have a mechanism to select and initialize the correct service (e.g., from key_manager)
+from llm_service.llm_factory import LLMServiceFactory
 
 class TaskChainProcessor:
-    """
-    Processes a sequence of tasks defined in a chain structure.
-    Manages context, mode application, and calls appropriate action handlers.
-    """
     def __init__(self, llm_service: LLMService):
-        self.llm_service = llm_service
+        self.default_llm_service = llm_service
 
     def _apply_global_mode(self, prompt: str, mode: str) -> str:
-        """Applies global mode instructions (fast, deep, research) to the prompt."""
         if mode == "deep":
-            return f"Deep Dive Mode. Please try to immerse yourself deeply in the problem and provide a highly detailed, multi-faceted analysis." + "\n\n" + prompt
+            return f"Deep Dive Mode. Please immerse yourself deeply in the problem and provide a highly detailed, multi-faceted analysis.\n\n{prompt}"
         elif mode == "research":
-            return f"Research Mode. Approach this task by first outlining a comprehensive plan of action, gathering necessary background information, and then executing the solution step-by-step." + "\n\n" + prompt
-        # 'fast' mode uses the original prompt
-
+            return f"Research Mode. First outline a comprehensive plan, gather background information, then execute the solution step-by-step.\n\n{prompt}"
         return prompt
 
+    def _get_service_for_step(self, step_model: str, user_id: str) -> LLMService:
+        """Если model != 'auto', пытаемся переключить провайдера (расширение)."""
+        if step_model == "auto" or step_model == self.default_llm_service.model_name:
+            return self.default_llm_service
+        # Здесь можно расширить: например, по model определить провайдера (openrouter/gpt-4o -> openrouter, local/gemma -> lmstudio)
+        # Пока возвращаем стандартный
+        return self.default_llm_service
+
     def process_chain(self, chain: List[Dict[str, str]], user_id: str, global_mode: str) -> Dict[str, Any]:
-        """
-        Processes the entire task chain sequentially.
-        Returns a dictionary containing the final result and history.
-        """
         context_history = []
         final_result = None
 
-        for step in chain:
+        for idx, step in enumerate(chain):
             prompt = step["prompt"]
             action = step["action"]
-            model = step["model"] # Currently unused, but kept for future expansion
+            model = step.get("model", "auto")
 
-            # 1. Apply global mode to the prompt
             processed_prompt = self._apply_global_mode(prompt, global_mode)
+            llm = self._get_service_for_step(model, user_id)
 
-            print(f"\n--- Processing Step: {action} ---")
-            
-            if action == "generate":
-                result = self.llm_service.generate_content(processed_prompt, context=context_history[-1]['text'] if context_history else "", mode=global_mode)
-                step_output = result["text"]
-                print("Generation successful.")
+            print(f"\n--- Step {idx+1}: {action} (model: {llm.model_name}) ---")
+            step_output = None
 
-            elif action == "consult":
-                # Consult uses the prompt as both primary and additional instructions
-                result = self.llm_service.consult_context(processed_prompt, context=context_history[-1]['text'] if context_history else "")
-                step_output = result["text"]
-                print("Consultation successful.")
+            try:
+                if action == "generate":
+                    context = context_history[-1]['text'] if context_history else ""
+                    result = llm.generate_content(processed_prompt, context=context, mode=global_mode)
+                    step_output = result["text"]
 
-            elif action == "check":
-                # Check requires the LLM to review a specific piece of content (which should be passed in the prompt or history)
-                # For simplicity, we assume the check is against the last generated text.
-                if not context_history:
-                    step_output = "Error: Cannot perform 'check' without prior output."
-                else:
+                elif action == "consult":
+                    context = context_history[-1]['text'] if context_history else ""
+                    result = llm.consult_context(processed_prompt, additional_instructions=context)
+                    step_output = result["text"]
+
+                elif action == "check":
+                    if not context_history:
+                        raise ValueError("Cannot 'check' without prior output")
                     last_content = context_history[-1]['text']
-                    result = self.llm_service.check_content(processed_prompt, last_content)
+                    result = llm.check_content(processed_prompt, last_content)
                     step_output = result["text"]
-                    print("Check successful.")
 
-            elif action == "correct":
-                # Correct requires the original prompt and the incorrect content (last history item)
-                if not context_history:
-                    step_output = "Error: Cannot perform 'correct' without prior output."
-                else:
+                elif action == "correct":
+                    if not context_history:
+                        raise ValueError("Cannot 'correct' without prior output")
                     incorrect_content = context_history[-1]['text']
-                    result = self.llm_service.correct_content(processed_prompt, incorrect_content, context=context_history[-1]['text']) # Using last text as instruction source for correction
+                    instructions = context_history[-1]['text']  # или можно брать из отдельного поля
+                    result = llm.correct_content(original_prompt=processed_prompt, incorrect_content=incorrect_content, instructions=instructions)
                     step_output = result["text"]
-                    print("Correction successful.")
 
-            else:
-                step_output = f"Unknown action type: {action}"
-                print(f"Error: Unknown action type: {action}")
+                else:
+                    raise ValueError(f"Unknown action: {action}")
 
+            except Exception as e:
+                step_output = f"ERROR in {action}: {str(e)}"
+                print(f"Error: {e}")
 
-            # Update context history and final result
             context_history.append({"prompt": prompt, "action": action, "text": step_output})
             final_result = step_output
 

@@ -1,40 +1,25 @@
 import inspect
-from typing import Any
-import asyncio
 from datetime import datetime
 import json
+import os
 
 _logger_state = {
-    "show_info": False,
+    "show_info": True,
     "show_errors": True,
     "log_info": True,
     "log_errors": True,
-    "logs_file_name": "work_info.log",
-    "is_writing": False
+    "logs_file_name": "work_info.log"
 }
 
-def log():
-    """
-    Generate log output to console and file.
-    
-    To console:
-    [L] Info...
+def _write_line(data: str) -> None:
+    try:
+        with open(_logger_state["logs_file_name"], "a", encoding="utf-8") as f:
+            f.write(data + "\n")
+    except Exception as e:
+        print(f"Error writing to log file: {e}")
 
-    To log:
-    2026-01-07 23:08:37 [L] Info... module: '__main__' function: 'main' line_number: '15' file: 'D:\\...'
-    """
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-def error(error_message: str, details: Any, show: str="default"):
-    """
-    Creates logs about errors.
-    
-    To console:
-    [E] Error... <Details>
-
-    To log:
-    2026-01-07 23:08:37 [E] Error... <Details> module: '__main__' function: 'main' line_number: '15' file: 'D:\\...'
-    """
+def log(message: str, level: str = "INFO") -> None:
+    """Логирование информационных сообщений."""
     frame = inspect.currentframe().f_back
     log_details = {
         'module': frame.f_globals.get('__name__'),
@@ -42,28 +27,18 @@ def error(error_message: str, details: Any, show: str="default"):
         'line_number': frame.f_lineno,
         'file': frame.f_code.co_filename
     }
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_line = f"{timestamp} [{level}] {message} | Context: {json.dumps(log_details)}"
+    
+    if _logger_state["show_info"] and level == "INFO":
+        print(f"[I] {message}")
+    if _logger_state["show_errors"] and level == "ERROR":
+        print(f"[E] {message}")
+    
+    if (level == "INFO" and _logger_state["log_info"]) or (level == "ERROR" and _logger_state["log_errors"]):
+        _write_line(log_line)
 
-    # Log to console
-    if _logger_state["show_errors"]:
-        print(f"[E] Error: {error_message}. Details: {details}")
-
-    # Log to file (asynchronously)
-    if _logger_state["log_errors"]:
-        asyncio.run(write_line(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} [E] Error: {error_message}. Details: {details} | Context: {json.dumps(log_details)}"))
-
-async def write_line(data: str) -> bool:
-    """
-    Creates line in log file.
-    """
-    while _logger_state["is_writing"]:
-        await asyncio.sleep(0.0001)
-    try:
-        with open(_logger_state["logs_file_name"], "a", encoding="utf-8") as f:
-            f.write(data + "\\n")
-        return True
-    except Exception as e:
-        print(f"Error writing to log file: {e}")
-        return False
-
-# Note: The original code had a placeholder for 'log' function, which is now redundant 
-# since the main logging logic is handled by error().
+def error(error_message: str, details: any = None, show: str = "default"):
+    """Логирование ошибок."""
+    msg = f"{error_message}" + (f" Details: {details}" if details else "")
+    log(msg, "ERROR")

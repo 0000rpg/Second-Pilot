@@ -157,6 +157,7 @@ class KeyManager:
         
         key["busy"] = not key["busy"]
         self.key_storage.update_key(key)
+        return True
 
     def get_keys_list(self) -> Dict:
         """
