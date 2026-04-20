@@ -19,7 +19,7 @@ docker compose watch frontend-dev
 Для запуска контейнеров релизной версии использовать:
 
 ```Dockerfile
-docker compose up frontend-prod
+docker compose up -d frontend-prod
 ```
 
 Доступ к сайту будет по <http://localhost/> (порт 80).
