@@ -1,5 +1,9 @@
 # Second-Pilot
 
+## Описание
+
+Проект для работы с LLM.
+
 ## Запуск проекта
 
 ### _Для разработки_
@@ -19,6 +23,7 @@ docker compose watch frontend-dev
 Для запуска контейнеров релизной версии использовать:
 
 ```Dockerfile
+docker compose build frontend-prod backend-control-prod backend-llm
 docker compose up -d frontend-prod
 ```
 
@@ -26,6 +31,6 @@ docker compose up -d frontend-prod
 
 ## _Дополнительная информация_
 
-Больше информации по [**фронтенду**](https://github.com/0000rpg/Second-Pilot/blob/main/frontend/README.md).
+Больше информации по [**фронтенду**](/frontend/README.md).
 
-Больше информации по [**бекэнду**](https://github.com/0000rpg/Second-Pilot/blob/main/backend/README.md).
+Больше информации по [**бекэнду**](/backend/README.md).
