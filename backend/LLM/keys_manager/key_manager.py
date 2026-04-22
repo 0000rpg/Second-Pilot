@@ -22,7 +22,7 @@ class KeyManager:
         except Exception as error:
             # Debug
             print(error)
-            raise Exception("Provisioning key: " + error)
+            raise Exception("Provisioning key: " + str(error))
         
         finally:
             self.key_storage = KeyStorage()

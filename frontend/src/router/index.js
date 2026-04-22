@@ -13,15 +13,12 @@ import { useAuthStore } from '@/features/auth/stores/auth';
  * @param {object} from - Текущий роут.
  * @param {Function} next - Функция перехода.
  */
-const authGuard = (to, from, next) => {
-  // Используем useAuthStore() внутри гварда для доступа к состоянию Pinia
+const authGuard = (to, _from, next) => {
   const authStore = useAuthStore();
 
   if (authStore.isAuthenticated && to.path === '/') {
-    console.log('Пользователь авторизован и перенаправляется на /main');
     next('/main');
   } else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    console.warn(`Доступ к ${to.name} запрещен. Перенаправление на логин.`);
     next('/');
   } else {
     next();

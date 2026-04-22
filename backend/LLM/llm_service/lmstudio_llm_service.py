@@ -10,7 +10,8 @@ class LMStudioLLMService(LLMService):
     """
     def __init__(self, api_key: str = "local", model_name: str = "auto"):
         super().__init__(api_key, model_name)
-        self.base_url = "http://localhost:1234/v1/chat/completions"
+        lmstudio_url = os.environ.get("LMSTUDIO_URL", "http://host.docker.internal:1234")
+        self.base_url = f"{lmstudio_url}/v1/chat/completions"
 
     def _call_llm(self, messages: list, temperature: float = 0.7) -> Dict[str, Any]:
         headers = {"Content-Type": "application/json"}

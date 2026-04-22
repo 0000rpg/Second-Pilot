@@ -1,26 +1,23 @@
-<!-- Таблица учётных записей с кнопками действий -->
 <template>
   <div class="text-text min-w-full overflow-x-auto p-4">
-    <!-- Заголовок таблицы -->
     <div
-      class="border-border text-text mb-2 grid grid-cols-7 items-center gap-4 border-b-2 text-base font-medium uppercase"
+      class="border-border text-text mb-2 grid grid-cols-5 items-center gap-4 border-b-2 text-base font-medium uppercase"
     >
-      <div class="col-span-3 text-left">Имя пользователя</div>
-      <div class="col-span-2 text-left">Пароль</div>
+      <div class="col-span-1 text-left">ID</div>
+      <div class="col-span-2 text-left">Имя пользователя</div>
       <div class="col-span-2 text-center">Действия</div>
     </div>
 
-    <!-- Строки данных -->
-    <div v-for="account in accounts" :key="account.id">
-      <div class="border-border mb-1 grid grid-cols-7 items-center gap-4 border-b text-base">
-        <div class="col-span-3 text-left">{{ account.username }}</div>
-        <div class="col-span-2 text-left">{{ account.password }}</div>
+    <div v-for="user in accounts" :key="user.id">
+      <div class="border-border mb-1 grid grid-cols-5 items-center gap-4 border-b text-base">
+        <div class="col-span-1 text-left text-sm opacity-60">{{ user.id }}</div>
+        <div class="col-span-2 text-left">{{ user.username }}</div>
         <div class="col-span-2 text-center">
-          <button @click="onEdit(account)" class="btn-default mb-1 w-full py-1 text-base">
+          <button @click="onEdit(user)" class="btn-default mb-1 w-full py-1 text-base">
             Edit
           </button>
           <button
-            @click="onDelete(account.id, account.username)"
+            @click="onDelete(user.id, user.username)"
             class="btn-error mb-1 w-full py-1 text-base"
           >
             Delete
@@ -32,7 +29,6 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
 defineProps({
   accounts: {
     type: Array,
@@ -40,10 +36,6 @@ defineProps({
   },
 });
 const emit = defineEmits(['edit', 'delete']);
-const onEdit = (account) => {
-  emit('edit', account);
-};
-const onDelete = (id, username) => {
-  emit('delete', id, username);
-};
+const onEdit = (user) => emit('edit', user);
+const onDelete = (id, username) => emit('delete', id, username);
 </script>
